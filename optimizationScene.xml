@@ -1,0 +1,79 @@
+<scene version='3.0.0'>
+    <default name="spp" value="128"/>
+    <default name="max_depth" value="-1" />
+
+
+<!-- integrator -->
+    <integrator type='prbvolpath'>
+        <integer name="max_depth" value="$max_depth"/>
+        <integer name="rr_depth" value="50"/>
+    	<boolean name="hide_emitters" value="True"/>
+    </integrator>
+
+
+<!-- emitter -->
+    <emitter type="point" id="light1">
+    	<rgb name='intensity' value='150000 150000 150000'/>
+        <!--<rgb name="intensity" value="100.0"/>-->
+        <transform name="to_world">
+            <translate x="-2.944557" y="48.8898" z="-41.4402"/>
+        </transform>
+    </emitter>
+   
+<!-- BSDFs --> 
+    <bsdf type="roughdielectric" id="rough_surfaces">
+        <float name="int_ior" value="1.3"/>
+        <float name="ext_ior" value="1.0"/>
+        <float name="alpha" value="0.02"/>
+        <rgb name='specular_reflectance' value='0.483181, 0.312296, 0.214866'/>
+    </bsdf>
+    
+    
+    <bsdf type="twosided" id="GroundBSDF">
+		<bsdf type="diffuse">
+			<rgb name="reflectance" value="0.03, 0.03, 0.03" />
+		</bsdf>
+    </bsdf>
+    
+    <medium id="medium1" type="homogeneous">
+        <float name="scale" value="1"/>
+        <phase type="hg">
+            <float name="g" value="0.0"/>
+        </phase>
+
+        <volume name="sigma_t" type="constvolume">
+            <float name="value" value="0.002"/>
+        </volume>
+        <volume name="albedo" type="constvolume">
+            <rgb name="value" value="0.1, 0.75, 0.9"/>
+        </volume>
+    </medium>
+    
+
+<!-- Shapes -->
+    <shape type="obj" id="rectangle">
+        <!-- <string name="filename" value="meshes/test_soap.obj"/>  -->
+        <string name="filename" value="soap_init.obj"/>
+        <transform name="to_world">
+            <scale y="0.9" />
+            <rotate y="1" angle="-45"/>
+            <translate y="7.2" x="0.2" z="-0.5"/>
+        </transform>
+    
+        <ref name="bsdf" id="rough_surfaces"/>
+        <ref name="interior" id="medium1"/>
+        
+    </shape>
+
+    
+    <shape type="obj" id="Ground">
+		<string name="filename" value="ground.obj" />
+		<transform name="to_world">
+			<matrix value="1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1" />
+		</transform>
+		<ref id="GroundBSDF" />
+	</shape>
+    
+    
+    
+</scene>
