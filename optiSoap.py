@@ -5,6 +5,15 @@ import matplotlib.pyplot as plt
 
 mi.set_variant('llvm_ad_rgb')
 
+def img_diff(img1, img2):
+    # TODO : check if same size
+    npimg1 = np.array(img1)
+    npimg2 = np.array(img2)
+    diff = np.empty((np.shape(npimg1)[0], np.shape(npimg1)[1]), dtype=float)
+    for i in range(np.shape(npimg1)[0]):
+        for j in range(np.shape(npimg1)[1]):
+            diff[i][j] = np.linalg.norm(npimg1[i][j] - npimg2[i][j])
+    return mi.Bitmap(diff)
 
 path_to_ref = "ref/"
 
@@ -301,25 +310,11 @@ for i in range(sensor_count):
 	    			}))
 
 
-# LOAD INIT SCENE, REF IMAGES AND RENDER INIT IMAGES
+# LOAD INIT SCENE AND REF IMAGES
 
 ref_images = [mi.Bitmap(path_to_ref+'synthetic_'+str(i)+'.exr').resample([720, 480]) for i in range(sensor_count)]
 
-scene = mi.load_file("scenes/optimizationScene.xml") # a changer
-
-init_images = []
-for i in range(sensor_count):
-	init_images.append(mi.render(scene, sensor=sensors[i], spp=ref_spp))
-	print(f"Init render {i:02d}/"+str(sensor_count-1), end='\r')
-
-
-# # uncomment to display init renders
-# fig, axs = plt.subplots(1, sensor_count, figsize=(14, 4))
-# for i in range(sensor_count):
-#     axs[i].imshow(mi.util.convert_to_bitmap(init_images[i]))
-#     axs[i].axis('off')
-
-# plt.show()
+scene = mi.load_file("scenes/optimizationScene.xml")
 
 
 # LOAD OPTIMIZER AND LOAD OPTIMIZED PARAMETER
@@ -332,10 +327,12 @@ opt = mi.ad.Adam(lr=0.02)
 opt[key] = params[key]
 params.update(opt)
 
-iteration_count = 40
-spp = 8
+iteration_count = 20
+spp = 4
 
 # OPTIMIZATION ---------------------------------------------
+
+loss_evolution = []
 
 total_loss = 0.0
 for it in range(iteration_count):
@@ -363,28 +360,38 @@ for it in range(iteration_count):
         params.update(opt)
         
         total_loss += loss[0]
-        print(f"Iteration {it:02d}: Total error={total_loss:6f}, Render {sensor_idx:02d}/{sensor_count}: error={loss[0]:6f}", end='\r')
+        print(f"Iteration {it:02d}: Total error={total_loss:6f}, Render {sensor_idx+1:02d}/{sensor_count}: error={loss[0]:6f}", end='\r')
+    loss_evolution.append(total_loss)
 
 print("Final total loss="+str(total_loss))
 
 # FINAL RENDER
 
 final_images = []
-for i in range(sensor_count):
+final_ref = []
+final_sub = []
+
+for i in [2,3,5,6,13,31,47]:
     image = mi.render(scene, sensor=sensors[i], spp=ref_spp)
     final_images.append(image)
-    print(f"Final render {i:02d}/"+str(sensor_count-1), end='\r')
-    # writing to file
-    mi.util.write_bitmap("final/_"+str(i)+".png", image)
-    mi.util.write_bitmap("final/_"+str(i)+".exr", image)
+    final_ref.append(ref_images[i])
+
+    final_sub.append(img_diff(image, ref_images[i]))
+
+plt.subplot(4, 1, 1)
+plt.plot(range(iteration_count), loss_evolution, label='Loss evolution')
 
 
-# # uncomment to display final renders
-# fig, axs = plt.subplots(1, sensor_count, figsize=(14, 4))
-# for i in range(sensor_count):
-#     axs[i].imshow(mi.util.convert_to_bitmap(final_images[i]))
-#     axs[i].axis('off')
+for i in range(len(final_images)):
+    plt.subplot(4, 7, 8+i)
+    plt.imshow(mi.util.convert_to_bitmap(final_ref[i]))
 
-# plt.show()
+    plt.subplot(4, 7, 15+i)
+    plt.imshow(mi.util.convert_to_bitmap(final_images[i]))
+
+    plt.subplot(4, 7, 22+i)
+    plt.imshow(mi.util.convert_to_bitmap(final_sub[i]))
+
+plt.show()
 
 print("sigma_t = "+str(params['medium1.sigma_t.value.value']))
