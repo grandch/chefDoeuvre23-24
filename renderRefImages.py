@@ -10,9 +10,9 @@ mi.set_variant('llvm_ad_rgb')
 
 # mi.register_bsdf("mybsdf", lambda props: MyBSDF(props))
 
-path_to_ref = "images/" # a changer
+path_to_ref = "ref/"
 # Loading a scene
-# scene = mi.load_file("../scenes/chef_doeuvre.xml") # a changer
+scene = mi.load_file("scenes/refScene.xml")
 
 ref_spp = 8
 
@@ -305,103 +305,10 @@ for i in range(sensor_count):
 		    			'pixel_format': 'rgb',
 	       				},
 	    			}))
-    
-	# # uncomment lines below to render and write ref images
 
-	# # rendering a scene
-	# image = mi.render(scene, spp=spp, sensor=sensor)  # spp = sample per pixel
+	# rendering a scene
+	image = mi.render(scene, spp=ref_spp, sensor=sensors[i])  # spp = sample per pixel
 
-	# # writing to file
-	# mi.util.write_bitmap(path_to_results + "synthetic_"+str(i)+".png", image)
-	# mi.util.write_bitmap(path_to_results + "synthetic_"+str(i)+".exr", image)
-
-
-# LOAD INIT SCENE, REF IMAGES AND RENDER INIT IMAGES
-
-ref_images = [mi.Bitmap(path_to_ref+'synthetic_'+str(i)+'.exr').resample([720, 480]) for i in range(sensor_count)]
-
-print(ref_images[0])
-
-scene = mi.load_file("optimizationScene.xml") # a changer
-
-init_images = []
-for i in range(sensor_count):
-	init_images.append(mi.render(scene, sensor=sensors[i], spp=ref_spp))
-	print(f"Init render {i:02d}/"+str(sensor_count-1), end='\r')
-
-
-# # uncomment to display init renders
-# fig, axs = plt.subplots(1, sensor_count, figsize=(14, 4))
-# for i in range(sensor_count):
-#     axs[i].imshow(mi.util.convert_to_bitmap(init_images[i]))
-#     axs[i].axis('off')
-
-# plt.show()
-
-
-# LOAD OPTIMIZER AND LOAD OPTIMIZED PARAMETER
-
-params = mi.traverse(scene)
-
-key = 'medium1.sigma_t.value.value'
-
-opt = mi.ad.Adam(lr=0.02)
-opt[key] = params[key]
-params.update(opt)
-
-iteration_count = 40
-spp = 8
-
-# OPTIMIZATION ---------------------------------------------
-
-total_loss = 0.0
-for it in range(iteration_count):
-    total_loss = 0.0
-    for sensor_idx in range(sensor_count):
-        # Perform the differentiable light transport simulation
-        img1 = mi.render(scene, params, sensor=sensors[sensor_idx], spp=spp, seed=it)
-        img2 = mi.render(scene, params, sensor=sensors[sensor_idx], spp=spp, seed=it+40)
-        
-        # Xi Deng L2 loss function
-        loss = dr.mean((img1 - ref_images[sensor_idx])*(img2 - ref_images[sensor_idx]))
-        
-        # Backpropagate gradients
-        dr.backward(loss)
-        
-        # Take a gradient step
-        opt.step()
-        
-        # Clamp the optimized density values. Since we used the `scale` parameter
-        # when instantiating the volume, we are in fact optimizing extinction
-        # in a range from [1e-6 * scale, scale].
-        # opt[key] = dr.clamp(opt[key], 1e-6, 2.0)
-        
-        # Propagate changes to the scene
-        params.update(opt)
-        
-        total_loss += loss[0]
-        print(f"Iteration {it:02d}: Total error={total_loss:6f}, Render {sensor_idx:02d}/{sensor_count}: error={loss[0]:6f}", end='\r')
-
-print("Final total loss="+str(total_loss))
-
-# FINAL RENDER
-
-final_images = []
-for i in range(sensor_count):
-    image = mi.render(scene, sensor=sensors[i], spp=ref_spp)
-    final_images.append(image)
-    print(f"Final render {i:02d}/"+str(sensor_count-1), end='\r')
-    # writing to file
-    mi.util.write_bitmap("final/_"+str(i)+".png", image)
-    mi.util.write_bitmap("final/_"+str(i)+".exr", image)
-
-
-# # uncomment to display final renders
-# fig, axs = plt.subplots(1, sensor_count, figsize=(14, 4))
-# for i in range(sensor_count):
-#     axs[i].imshow(mi.util.convert_to_bitmap(final_images[i]))
-#     axs[i].axis('off')
-
-# plt.show()
-
-print("sigma_t = "+str(params['medium1.sigma_t.value.value']))
+	# writing to file
+	mi.util.write_bitmap(path_to_ref + "synthetic_"+str(i)+".png", image)
+	mi.util.write_bitmap(path_to_ref + "synthetic_"+str(i)+".exr", image)

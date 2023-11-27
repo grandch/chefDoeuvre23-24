@@ -4,7 +4,7 @@
 
 
 <!-- integrator -->
-    <integrator type='prbvolpath'>
+    <integrator type='volpath'>
         <integer name="max_depth" value="$max_depth"/>
         <integer name="rr_depth" value="50"/>
     	<boolean name="hide_emitters" value="True"/>
@@ -19,6 +19,32 @@
             <translate x="-2.944557" y="48.8898" z="-41.4402"/>
         </transform>
     </emitter>
+
+<!-- Sensor -->
+<!--
+    <sensor type="perspective" id="sensor">
+    	<string name="fov_axis" value="x" />
+        <float name="fov" value="10" />
+        <transform name="to_world">
+            <lookat origin="2.8350489, 98.868300, 0.9857774" 
+            	    target="2.8058696359579196, 97.86884346912309, 0.9704662388713631" 
+            	    up="0.99784, 0.02822, -0.05922" />
+        </transform>
+        <sampler type="independent">
+            <integer name="sample_count" value="$spp"/>
+        </sampler>
+
+        <film type="hdrfilm">
+                <integer name="width" value="3488" />
+                <integer name="height" value="2320" />
+                <string name="pixel_format" value="rgb" />
+                <boolean name="compensate" value="True"/>
+                <rfilter type="gaussian">
+    		    <float name="stddev" value="0.1"/>
+                </rfilter>
+            </film>
+    </sensor>
+-->
    
 <!-- BSDFs --> 
     <bsdf type="roughdielectric" id="rough_surfaces">
@@ -42,7 +68,7 @@
         </phase>
 
         <volume name="sigma_t" type="constvolume">
-            <float name="value" value="0.002"/>
+            <float name="value" value="1.7"/>
         </volume>
         <volume name="albedo" type="constvolume">
             <rgb name="value" value="0.1, 0.75, 0.9"/>
@@ -53,7 +79,7 @@
 <!-- Shapes -->
     <shape type="obj" id="rectangle">
         <!-- <string name="filename" value="meshes/test_soap.obj"/>  -->
-        <string name="filename" value="soap_init.obj"/>
+        <string name="filename" value="../meshes/soap_init.obj"/>
         <transform name="to_world">
             <scale y="0.9" />
             <rotate y="1" angle="-45"/>
@@ -67,7 +93,7 @@
 
     
     <shape type="obj" id="Ground">
-		<string name="filename" value="ground.obj" />
+		<string name="filename" value="../meshes/ground.obj" />
 		<transform name="to_world">
 			<matrix value="1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1" />
 		</transform>
