@@ -10,11 +10,11 @@ mi.set_variant('llvm_ad_rgb')
 
 # mi.register_bsdf("mybsdf", lambda props: MyBSDF(props))
 
-path_to_ref = "ref/"
+path_to_ref = "ref1024/"
 # Loading a scene
 scene = mi.load_file("scenes/refScene.xml")
 
-ref_spp = 8
+ref_spp = 1024
 
 # Geometry 0
 origin0 = [2.8350489, 98.868300, 0.9857774]
@@ -312,3 +312,5 @@ for i in range(sensor_count):
 	# writing to file
 	mi.util.write_bitmap(path_to_ref + "synthetic_"+str(i)+".png", image)
 	mi.util.write_bitmap(path_to_ref + "synthetic_"+str(i)+".exr", image)
+
+	print(f"Render {i+1:02d}/{sensor_count}", end='\r')

@@ -327,8 +327,8 @@ opt = mi.ad.Adam(lr=0.02)
 opt[key] = params[key]
 params.update(opt)
 
-iteration_count = 20
-spp = 4
+iteration_count = 40
+spp = 8
 
 # OPTIMIZATION ---------------------------------------------
 
@@ -344,6 +344,9 @@ for it in range(iteration_count):
         
         # Xi Deng L2 loss function
         loss = dr.mean((img1 - ref_images[sensor_idx])*(img2 - ref_images[sensor_idx]))
+
+        # classic L2 loss
+        # loss = dr.mean(dr.sqr(img1 - ref_images[sensor_idx]))
         
         # Backpropagate gradients
         dr.backward(loss)

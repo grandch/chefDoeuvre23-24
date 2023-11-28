@@ -1,5 +1,5 @@
 <scene version='3.0.0'>
-    <default name="spp" value="128"/>
+    <default name="spp" value="1024"/>
     <default name="max_depth" value="-1" />
 
 
@@ -14,37 +14,12 @@
 <!-- emitter -->
     <emitter type="point" id="light1">
     	<rgb name='intensity' value='150000 150000 150000'/>
-        <!--<rgb name="intensity" value="100.0"/>-->
         <transform name="to_world">
             <translate x="-2.944557" y="48.8898" z="-41.4402"/>
         </transform>
     </emitter>
 
 <!-- Sensor -->
-<!--
-    <sensor type="perspective" id="sensor">
-    	<string name="fov_axis" value="x" />
-        <float name="fov" value="10" />
-        <transform name="to_world">
-            <lookat origin="2.8350489, 98.868300, 0.9857774" 
-            	    target="2.8058696359579196, 97.86884346912309, 0.9704662388713631" 
-            	    up="0.99784, 0.02822, -0.05922" />
-        </transform>
-        <sampler type="independent">
-            <integer name="sample_count" value="$spp"/>
-        </sampler>
-
-        <film type="hdrfilm">
-                <integer name="width" value="3488" />
-                <integer name="height" value="2320" />
-                <string name="pixel_format" value="rgb" />
-                <boolean name="compensate" value="True"/>
-                <rfilter type="gaussian">
-    		    <float name="stddev" value="0.1"/>
-                </rfilter>
-            </film>
-    </sensor>
--->
    
 <!-- BSDFs --> 
     <bsdf type="roughdielectric" id="rough_surfaces">
@@ -63,6 +38,7 @@
     
     <medium id="medium1" type="homogeneous">
         <float name="scale" value="1"/>
+        
         <phase type="hg">
             <float name="g" value="0.0"/>
         </phase>
@@ -73,6 +49,7 @@
         <volume name="albedo" type="constvolume">
             <rgb name="value" value="0.1, 0.75, 0.9"/>
         </volume>
+        <boolean name="sample_emitters" value="false"/>
     </medium>
     
 
