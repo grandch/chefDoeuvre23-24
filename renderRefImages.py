@@ -2,19 +2,43 @@ import mitsuba as mi
 import drjit as dr
 import numpy as np
 import matplotlib.pyplot as plt
-# from bsdf_test import MyBSDF
+import argparse
+import os
+
 mi.set_variant('llvm_ad_rgb')
 
 
-# lambda props: MyBSDF(props)
+# parsing prg args
+parser = argparse.ArgumentParser()
+parser.add_argument("scene_path", help="path to the scene to render", type=str)
+parser.add_argument("render_path", help="path where to write the renders", type=str)
+parser.add_argument("-x", help="x resolution, default is 720", type=int)
+parser.add_argument("-y", help="y_resolution, default is 480", type=int)
+parser.add_argument("-s", help="number of samples for the renders, default is 4096", type=int)
+args = parser.parse_args()
 
-# mi.register_bsdf("mybsdf", lambda props: MyBSDF(props))
+ref_sample, xRes, yRes = None, None, None
+if args.s != None:
+	ref_sample = args.s
+else:
+	ref_sample = 4096
 
-path_to_ref = "ref1024/"
+if args.x != None:
+	xRes = args.x
+else:
+	xRes = 720
+
+if args.y != None:
+	yRes = args.y
+else:
+	yRes = 720
+
 # Loading a scene
-scene = mi.load_file("scenes/refScene.xml")
+scene = mi.load_file(args.scene_path)
 
-ref_spp = 1024
+# checking and creating render dir
+if not os.path.exists(args.render_path):
+	os.makedirs(args.render_path)
 
 # Geometry 0
 origin0 = [2.8350489, 98.868300, 0.9857774]
@@ -292,12 +316,12 @@ for i in range(sensor_count):
 				),
 				'sampler': {
 		    			'type': 'independent',
-		    			'sample_count': ref_spp
+		    			'sample_count': ref_sample
 					},
 				'film': {
 		    			'type': 'hdrfilm',
-		    			'width': 720,
-		    			'height': 480,
+		    			'width': xRes,
+		    			'height': yRes,
 		    			'rfilter': {
 		        			'type': 'gaussian',
 		        			'stddev' : 0.1,
@@ -307,10 +331,10 @@ for i in range(sensor_count):
 	    			}))
 
 	# rendering a scene
-	image = mi.render(scene, spp=ref_spp, sensor=sensors[i])  # spp = sample per pixel
+	image = mi.render(scene, spp=ref_sample, sensor=sensors[i])  # spp = sample per pixel
 
 	# writing to file
-	mi.util.write_bitmap(path_to_ref + "synthetic_"+str(i)+".png", image)
-	mi.util.write_bitmap(path_to_ref + "synthetic_"+str(i)+".exr", image)
+	mi.util.write_bitmap(args.render_path + "synthetic_"+str(i)+".png", image)
+	mi.util.write_bitmap(args.render_path + "synthetic_"+str(i)+".exr", image)
 
 	print(f"Render {i+1:02d}/{sensor_count}", end='\r')

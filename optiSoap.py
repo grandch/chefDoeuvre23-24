@@ -2,8 +2,55 @@ import mitsuba as mi
 import drjit as dr
 import numpy as np
 import matplotlib.pyplot as plt
+import argparse
+import os
 
 mi.set_variant('llvm_ad_rgb')
+
+
+# parsing prg args
+parser = argparse.ArgumentParser()
+parser.add_argument("scene_path", help="path to the scene to render", type=str)
+parser.add_argument("ref_path", help="path to ref images", type=str)
+parser.add_argument("-x", help="x resolution, default is 720", type=int)
+parser.add_argument("-y", help="y_resolution, default is 480", type=int)
+parser.add_argument("-s", help="number of samples for the renders, default is 8", type=int)
+parser.add_argument("-fs", help="number of samples for the final renders, default is 4096", type=int)
+parser.add_argument("-lr", help="learning rate, default is 0.02", type=float)
+parser.add_argument("-it", help="iteration count, default is 40", type=int)
+parser.add_argument("-init_sigma_t", help="init value of sigma_t parameter, default is 0.002", type=float)
+args = parser.parse_args()
+
+spp, xRes, yRes, lr, iteration_count, fspp, init_sigma_t = None, None, None, None, None, None, None
+if args.s != None:
+	spp = args.s
+else:
+	spp = 8
+if args.x != None:
+	xRes = args.x
+else:
+	xRes = 720
+if args.y != None:
+	yRes = args.y
+else:
+	yRes = 720
+if args.lr != None:
+    lr = args.lr
+else:
+    lr = 0.02
+if args.it != None:
+    iteration_count = args.it
+else:
+    iteration_count = 40
+if args.fs != None:
+    fspp = args.fs
+else:
+    fspp = 4096
+if args.init_sigma_t != None:
+    init_sigma_t = args.init_sigma_t
+else:
+    init_sigma_t = 0.002
+
 
 def img_diff(img1, img2):
     # TODO : check if same size
@@ -15,9 +62,7 @@ def img_diff(img1, img2):
             diff[i][j] = np.linalg.norm(npimg1[i][j] - npimg2[i][j])
     return mi.Bitmap(diff)
 
-path_to_ref = "ref/"
-
-ref_spp = 8
+path_to_ref = args.ref_path
 
 # Geometry 0
 origin0 = [2.8350489, 98.868300, 0.9857774]
@@ -295,12 +340,12 @@ for i in range(sensor_count):
 				),
 				'sampler': {
 		    			'type': 'independent',
-		    			'sample_count': ref_spp
+		    			'sample_count': spp
 					},
 				'film': {
 		    			'type': 'hdrfilm',
-		    			'width': 720,
-		    			'height': 480,
+		    			'width': xRes,
+		    			'height': yRes,
 		    			'rfilter': {
 		        			'type': 'gaussian',
 		        			'stddev' : 0.1,
@@ -310,25 +355,26 @@ for i in range(sensor_count):
 	    			}))
 
 
-# LOAD INIT SCENE AND REF IMAGES
+# LOAD INIT SCENE AND RESAMPLE REF IMAGES
 
-ref_images = [mi.Bitmap(path_to_ref+'synthetic_'+str(i)+'.exr').resample([720, 480]) for i in range(sensor_count)]
+ref_images = [mi.Bitmap(path_to_ref+'synthetic_'+str(i)+'.exr').resample([xRes, yRes]) for i in range(sensor_count)]
+# ref_images = [mi.Bitmap(path_to_ref+'synthetic_'+str(i)+'.exr') for i in range(sensor_count)]
 
-scene = mi.load_file("scenes/optimizationScene.xml")
+scene = mi.load_file(args.scene_path)
 
 
-# LOAD OPTIMIZER AND LOAD OPTIMIZED PARAMETER
+# LOAD OPTIMIZER AND INIT AND LOAD OPTIMIZED PARAMETER
 
 params = mi.traverse(scene)
 
 key = 'medium1.sigma_t.value.value'
+params[key] = init_sigma_t
+params.update()
 
-opt = mi.ad.Adam(lr=0.02)
+opt = mi.ad.Adam(lr=lr)
 opt[key] = params[key]
 params.update(opt)
 
-iteration_count = 40
-spp = 8
 
 # OPTIMIZATION ---------------------------------------------
 
@@ -343,7 +389,8 @@ for it in range(iteration_count):
         img2 = mi.render(scene, params, sensor=sensors[sensor_idx], spp=spp, seed=it+40)
         
         # Xi Deng L2 loss function
-        loss = dr.mean((img1 - ref_images[sensor_idx])*(img2 - ref_images[sensor_idx]))
+        loss = dr.abs(dr.mean((img1 - ref_images[sensor_idx])*(img2 - ref_images[sensor_idx])))
+        
 
         # classic L2 loss
         # loss = dr.mean(dr.sqr(img1 - ref_images[sensor_idx]))
@@ -375,7 +422,7 @@ final_ref = []
 final_sub = []
 
 for i in [2,3,5,6,13,31,47]:
-    image = mi.render(scene, sensor=sensors[i], spp=ref_spp)
+    image = mi.render(scene, sensor=sensors[i], spp=fspp)
     final_images.append(image)
     final_ref.append(ref_images[i])
 
