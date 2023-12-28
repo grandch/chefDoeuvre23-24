@@ -428,19 +428,25 @@ for i in [2,3,5,6,13,31,47]:
 
     final_sub.append(img_diff(image, ref_images[i]))
 
+plt.title("Opti sp:"+str(spp)+" Final sp:"+str(fspp)+" Resolution:"+str(xRes)+"*"+str(yRes)+" Nb it:"+str(iteration_count)+" lr:"+str(lr))
 plt.subplot(4, 1, 1)
 plt.plot(range(iteration_count), loss_evolution, label='Loss evolution')
+plt.xlabel("Iteration count")
+plt.ylabel("Loss value")
 
 
 for i in range(len(final_images)):
     plt.subplot(4, 7, 8+i)
     plt.imshow(mi.util.convert_to_bitmap(final_ref[i]))
+    plt.xlabel("Sensor "+str(i)+" reference")
 
     plt.subplot(4, 7, 15+i)
     plt.imshow(mi.util.convert_to_bitmap(final_images[i]))
+    plt.xlabel("Sensor "+str(i)+" result")
 
     plt.subplot(4, 7, 22+i)
     plt.imshow(mi.util.convert_to_bitmap(final_sub[i]))
+    plt.xlabel("Sensor "+str(i)+" difference")
 
 plt.show()
 
