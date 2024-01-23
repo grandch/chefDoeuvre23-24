@@ -1,0 +1,63 @@
+<scene version='3.0.0'>
+    <default name="spp" value="128"/>
+    <default name="max_depth" value="-1" />
+
+
+<!-- integrator -->
+    <integrator type='volpath'>
+        <integer name="max_depth" value="$max_depth"/>
+        <integer name="rr_depth" value="50"/>
+    	<boolean name="hide_emitters" value="False"/>
+    </integrator>
+
+<!-- emitters -->
+    <emitter type="envmap">
+        <string name="filename" value="textures/envmap.exr"/>
+    </emitter>
+
+    
+   
+<!-- BSDFs --> 
+    <bsdf type="roughdielectric" id="rough_surfaces">
+        <float name="int_ior" value="1.3"/>
+        <float name="ext_ior" value="1.0"/>
+        <float name="alpha" value="0.7"/>
+        <rgb name='specular_reflectance' value='0.483181, 0.312296, 0.214866'/>
+    </bsdf>
+    
+    <medium id="medium1" type="homogeneous">
+        <float name="scale" value="1"/>
+        <phase type="hg">
+            <float name="g" value="0.0"/>
+        </phase>
+
+        <volume name="sigma_t" type="constvolume">
+            <float name="value" value="0.002"/>
+        </volume>
+        <volume name="albedo" type="constvolume">
+            <rgb name="value" value="0.1, 0.75, 0.9"/>
+        </volume>
+    </medium>
+    
+
+<!-- Shapes -->
+    <shape type="obj" id="rectangle">
+        <string name="filename" value="../meshes/Covestro_12.obj"/>    
+        <ref name="bsdf" id="rough_surfaces"/>
+        <ref name="interior" id="medium1"/>
+    </shape>
+
+    <shape type="obj" id="laser">
+        <string name="filename" value="../meshes/laser_surface.obj"/>    
+        <emitter type="directionalarea">
+            <rgb name="radiance" value="10000.0"/>
+        </emitter>
+        <ref name="bsdf" id="rough_surfaces"/>
+        <transform name="to_world">
+            <scale x="1" y="1" z="1"/>
+            <rotate x="1" angle="180"/>
+            <!-- <translate y="1.2" x="0" z="0"/> -->
+        </transform>
+    </shape> 
+
+</scene>
