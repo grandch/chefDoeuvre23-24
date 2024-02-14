@@ -1,7 +1,8 @@
 import mitsuba as mi
 import matplotlib.pyplot as plt
 
-mi.set_variant('scalar_rgb')
+mi.set_variant('llvm_ad_rgb')
+# mi.set_variant('scalar_rgb')
 
 scene = mi.load_dict({
     'type': 'scene',
@@ -25,12 +26,7 @@ scene = mi.load_dict({
             'phase': {
                 'type': 'hg',
                 'g': 0.7
-}
-                # 'type': 'diffuse',
-                # 'reflectance': {
-                #     'type': 'rgb',
-                #     'value': [0.7, 0.75, 0.7]
-                # }
+                    }
                 }
     },
     'sensor': {
@@ -56,12 +52,20 @@ scene = mi.load_dict({
         'direction':[-4,4,0],
         'radiance': {
             'type': 'rgb',
-            'value': 1.0,
+            'value': [2, 0.2, 0.4],
         }
     },
+    'light2':{
+        'type': 'directional',
+    'direction': [1.0, 0.0, 0.0],
+    'irradiance': {
+        'type': 'rgb',
+        'value': [1.0, 0.0, 0.0],
+    }
+    }
 })
 
-image = mi.render(scene, spp=512)
+image = mi.render(scene, spp=16)
 
 plt.imshow(mi.util.convert_to_bitmap(image))
 plt.show()

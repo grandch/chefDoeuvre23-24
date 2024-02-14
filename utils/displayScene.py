@@ -5,7 +5,7 @@ import argparse
 import xml.etree.ElementTree as ET
 import os
 
-mi.set_variant('llvm_ad_rgb')
+mi.set_variant('scalar_rgb')
 
 # parsing prg args
 parser = argparse.ArgumentParser()
