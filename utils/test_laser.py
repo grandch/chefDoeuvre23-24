@@ -2,7 +2,6 @@ import mitsuba as mi
 import matplotlib.pyplot as plt
 
 mi.set_variant('llvm_ad_rgb')
-# mi.set_variant('scalar_rgb')
 
 scene = mi.load_dict({
     'type': 'scene',
@@ -55,7 +54,7 @@ scene = mi.load_dict({
             'value': [2, 0.2, 0.4],
         }
     },
-    'light2':{
+    'light3':{
         'type': 'directional',
     'direction': [1.0, 0.0, 0.0],
     'irradiance': {
