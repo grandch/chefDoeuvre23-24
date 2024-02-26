@@ -2,7 +2,6 @@
     <default name="spp" value="128"/>
     <default name="max_depth" value="-1" />
 
-
 <!-- integrator -->
     <integrator type='prbvolpath'>
         <integer name="max_depth" value="$max_depth"/>
@@ -10,25 +9,24 @@
     	<boolean name="hide_emitters" value="True"/>
     </integrator>
 
-
-<!-- emitter -->
-    <emitter type="envmap">
+<!-- emitters -->
+<emitter type="envmap">
         <string name="filename" value="textures/envmap.exr"/>
     </emitter>
    
+    <emitter type="laser">
+        <point name="position" value='4,-4,0'/>
+        <float name="radius" value='0.1'/>
+        <vector name="direction" value='-4,4,0'/>
+        <rgb name="radiance" value="1.0"/>
+    </emitter>
+
 <!-- BSDFs --> 
     <bsdf type="roughdielectric" id="rough_surfaces">
         <float name="int_ior" value="1.3"/>
         <float name="ext_ior" value="1.0"/>
-        <float name="alpha" value="0.02"/>
+        <float name="alpha" value="0.7"/>
         <rgb name='specular_reflectance' value='0.483181, 0.312296, 0.214866'/>
-    </bsdf>
-    
-    
-    <bsdf type="twosided" id="GroundBSDF">
-		<bsdf type="diffuse">
-			<rgb name="reflectance" value="0.03, 0.03, 0.03" />
-		</bsdf>
     </bsdf>
     
     <medium id="medium1" type="homogeneous">
@@ -45,31 +43,11 @@
         </volume>
     </medium>
     
-
 <!-- Shapes -->
     <shape type="obj" id="rectangle">
-        <!-- <string name="filename" value="meshes/test_soap.obj"/>  -->
-        <string name="filename" value="../meshes/soap_init.obj"/>
-        <transform name="to_world">
-            <scale y="0.9" />
-            <rotate y="1" angle="-45"/>
-            <translate y="7.2" x="0.2" z="-0.5"/>
-        </transform>
-    
+        <string name="filename" value="../meshes/Covestro_12.obj"/>    
         <ref name="bsdf" id="rough_surfaces"/>
         <ref name="interior" id="medium1"/>
-        
     </shape>
 
-    
-    <shape type="obj" id="Ground">
-		<string name="filename" value="../meshes/ground.obj" />
-		<transform name="to_world">
-			<matrix value="1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1" />
-		</transform>
-		<ref id="GroundBSDF" />
-	</shape>
-    
-    
-    
 </scene>

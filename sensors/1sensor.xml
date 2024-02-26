@@ -1,0 +1,19 @@
+<capteurs>
+  <capteur>
+    <origins>
+      <origin>0</origin>
+      <origin>0.7</origin>
+      <origin>0</origin>
+    </origins>
+    <targets>
+      <target>0</target>
+      <target>0</target>
+      <target>0</target>
+    </targets>
+    <ups>
+      <up>0</up>
+      <up>0</up>
+      <up>1</up>
+    </ups>
+  </capteur>
+</capteurs>

@@ -1,0 +1,19 @@
+<capteurs>
+  <capteur>
+    <origins>
+      <origin>0.4124579436349758</origin>
+      <origin>0.058085583954402234</origin>
+      <origin>-0.33230771606359427</origin>
+    </origins>
+    <targets>
+      <target>0.7069253626303624</target>
+      <target>-0.0050278319727824535</target>
+      <target>-0.70727028254804</target>
+    </targets>
+    <ups>
+      <up>0.99784</up>
+      <up>0.02822</up>
+      <up>-0.05922</up>
+    </ups>
+  </capteur>
+</capteurs>
