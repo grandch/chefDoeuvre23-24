@@ -3,50 +3,50 @@
     <default name="max_depth" value="-1" />
 
 <!-- integrator -->
-    <integrator type='prbvolpath'>
+    <integrator type='volpath'>
         <integer name="max_depth" value="$max_depth"/>
-        <integer name="rr_depth" value="50"/>
     	<boolean name="hide_emitters" value="True"/>
     </integrator>
 
 <!-- emitters -->
-<emitter type="envmap">
-        <string name="filename" value="textures/envmap.exr"/>
+    <emitter type="envmap">
+        <string name="filename" value="scenes/textures/envmap.exr"/>
+        <float name="scale" value="0.01"/>
     </emitter>
-   
+
     <emitter type="laser">
-        <point name="position" value='4,-4,0'/>
-        <float name="radius" value='0.1'/>
-        <vector name="direction" value='-4,4,0'/>
-        <rgb name="radiance" value="1.0"/>
+        <point name="position" value='0,0,0'/>
+        <float name="radius" value='0.001'/>
+        <vector name="direction" value='0,1,0'/>
+        <rgb name="radiance" value="1000.0"/>
     </emitter>
 
 <!-- BSDFs --> 
     <bsdf type="roughdielectric" id="rough_surfaces">
         <float name="int_ior" value="1.3"/>
         <float name="ext_ior" value="1.0"/>
-        <float name="alpha" value="0.7"/>
-        <rgb name='specular_reflectance' value='0.483181, 0.312296, 0.214866'/>
+        <float name="alpha" value="0.02"/>
+        <rgb name='specular_reflectance' value='0.7, 0.7, 0.7'/>
     </bsdf>
     
     <medium id="medium1" type="homogeneous">
-        <float name="scale" value="1"/>
+    <float name="scale" value="40."/>
         <phase type="hg">
             <float name="g" value="0.0"/>
         </phase>
 
         <volume name="sigma_t" type="constvolume">
-            <float name="value" value="0.002"/>
+            <float name="value" value="5.7"/>
         </volume>
-        <volume name="albedo" type="constvolume">
-            <rgb name="value" value="0.1, 0.75, 0.9"/>
-        </volume>
+        <!-- <volume name="albedo" type="constvolume">
+            <rgb name="value" value="0.7, 0.75, 0.9"/>
+        </volume> -->
     </medium>
     
 <!-- Shapes -->
     <shape type="obj" id="rectangle">
-        <string name="filename" value="../meshes/Covestro_12.obj"/>    
-        <ref name="bsdf" id="rough_surfaces"/>
+        <string name="filename" value="meshes/Covestro_12.obj"/>    
+        <!-- <ref name="exterior" id="rough_surfaces"/> -->
         <ref name="interior" id="medium1"/>
     </shape>
 
