@@ -5,31 +5,31 @@
 <!-- integrator -->
     <integrator type='volpath'>
         <integer name="max_depth" value="$max_depth"/>
-    	<boolean name="hide_emitters" value="False"/>
+    	<boolean name="hide_emitters" value="True"/>
     </integrator>
 
 <!-- emitters -->
-    <emitter type="envmap">
+    <!-- <emitter type="envmap">
         <string name="filename" value="scenes/textures/envmap.exr"/>
         <float name="scale" value="0.1"/>
-    </emitter>
+    </emitter> -->
 
     <emitter type="laser">
         <point name="position" value='0,0,0'/>
         <float name="radius" value='0.001'/>
         <vector name="direction" value='0,1,0'/>
-        <rgb name="radiance" value="1000000.0"/>
+        <rgb name="radiance" value="100000.0"/>
     </emitter>
 
 <!-- BSDFs --> 
-    <bsdf type="roughdielectric" id="rough_surfaces">
+    <!-- <bsdf type="roughdielectric" id="rough_surfaces">
         <float name="int_ior" value="1.3"/>
         <float name="ext_ior" value="1.0"/>
-        <float name="alpha" value="0.15"/>
+        <float name="alpha" value="0.9"/>
         <rgb name='specular_reflectance' value='0.7, 0.7, 0.7'/>
-    </bsdf>
+    </bsdf> -->
     <!-- <bsdf type="diffuse" id="rough_surfaces">
-    <rgb name="reflectance" value="0.2, 0.25, 0.7"/>
+        <rgb name="reflectance" value="0.2, 0.25, 0.7"/>
     </bsdf> -->
     <!-- <bsdf type="plastic" id="rough_surfaces">
         <float name="int_ior" value="1.3"/>
@@ -45,7 +45,7 @@
         </phase>
 
         <volume name="sigma_t" type="constvolume">
-            <float name="value" value="0."/>
+            <float name="value" value="150."/>
         </volume>
         <!-- <volume name="albedo" type="constvolume">
             <rgb name="value" value="0.7, 0.75, 0.9"/>
@@ -55,8 +55,8 @@
 <!-- Shapes -->
     <shape type="obj" id="rectangle">
         <string name="filename" value="meshes/Covestro_12.obj"/>    
-        <ref name="bsdf" id="rough_surfaces"/>
-        <!-- <ref name="interior" id="medium1"/> -->
+        <!-- <ref name="bsdf" id="rough_surfaces"/> -->
+        <ref name="interior" id="medium1"/>
     </shape>
 
 </scene>
