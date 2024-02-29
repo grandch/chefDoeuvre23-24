@@ -114,8 +114,8 @@ for i in range(40):
         params['Laser.direction'] = laser_dir[sensor]
         params.update()
 
-        img1 = mi.render(scene, spp=ref_sample, sensor=sensors[sensor], seed=i)
-        img2 = mi.render(scene, spp=ref_sample, sensor=sensors[sensor], seed=i+200)
+        img1 = mi.render(scene, params, spp=ref_sample, sensor=sensors[sensor], seed=i)
+        img2 = mi.render(scene, params, spp=ref_sample, sensor=sensors[sensor], seed=i+200)
 
         # Xi Deng L2 loss function
         loss = dr.abs(dr.mean((img1 - ref_images['465nm'][0])*(img2 - ref_images['465nm'][0])))
@@ -137,7 +137,3 @@ for i in range(40):
 print(total_loss)
 plt.plot(range(40), loss_evolution, label='Loss evolution')
 plt.show()
-
-# mi.util.write_bitmap('measured' + str(i) + '.png', image)
-# plt.imshow(mi.util.convert_to_bitmap(image))
-# plt.show()
