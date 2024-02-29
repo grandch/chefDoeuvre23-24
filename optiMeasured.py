@@ -25,14 +25,15 @@ def load_sensors_lights_and_refs(sensors_dir):
     dirs = sorted(os.listdir(sensors_dir))
     ref = {}
 	
-    for dir in dirs:
-        lambdas = os.listdir(sensors_dir + "/" + dir)
-        for lam in lambdas:
-            if ref.__contains__(lam):
-                ref[lam].append(rawpy.imread(sensors_dir + "/" + dir + "/" + lam + "/" + sorted(os.listdir(sensors_dir + "/" + dir + "/" + lam))[0]))
-            else:
-                ref[lam] = []
-                ref[lam].append(rawpy.imread(sensors_dir + "/" + dir + "/" + lam + "/" + sorted(os.listdir(sensors_dir + "/" + dir + "/" + lam))[0]))
+    # for dir in dirs:
+    #     lambdas = os.listdir(sensors_dir + "/" + dir)
+    #     for lam in lambdas:
+    #         if ref.__contains__(lam):
+    #             print("i")
+    #             ref[lam].append(rawpy.imread(sensors_dir + "/" + dir + "/" + lam + "/" + sorted(os.listdir(sensors_dir + "/" + dir + "/" + lam))[0]))
+    #         else:
+    #             ref[lam] = []
+    #             ref[lam].append(rawpy.imread(sensors_dir + "/" + dir + "/" + lam + "/" + sorted(os.listdir(sensors_dir + "/" + dir + "/" + lam))[0]))
 
     # origin.append([0.4124579436349758*10, 0.058085583954402234*10, -0.33230771606359427*10])
     # origin.append([-0.26187965706737165*10, 0.0639193905312978*10, -0.3371195109510675*10])
@@ -40,7 +41,9 @@ def load_sensors_lights_and_refs(sensors_dir):
     # origin.append([-0.04723309843906157*10, 0.06267489306727239*10, -0.45902214575013506*10])
     # origin.append([0.1995977351808692*10, 0.06094895876798736*10, -0.4572594416582021*10])
                 
-    origin.append([0.4124579436349758*5, 0.058085583954402234*5, -0.33230771606359427*5])
+    # origin.append([-0.4124579436349758*5, -0.058085583954402234*5, 0.33230771606359427*5])
+    origin.append([0,0,1])
+    # origin.append([0.4124579436349758*5, 0.058085583954402234*5, -0.33230771606359427*5])
     origin.append([-0.26187965706737165*5, 0.0639193905312978*5, -0.3371195109510675*5])
     origin.append([0.07629510952287223*5, 0.06160241046937788*5, -0.4743865210065597*5])
     origin.append([-0.04723309843906157*5, 0.06267489306727239*5, -0.45902214575013506*5])
@@ -76,6 +79,7 @@ def load_sensors_lights_and_refs(sensors_dir):
 sensors, laser_dir, ref = load_sensors_lights_and_refs("ref/measured")
 
 params = mi.traverse(scene)
+print(params)
 
 for i in range(1):
 # for i in range(len(sensors)):
