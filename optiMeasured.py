@@ -1,4 +1,8 @@
+# before using this script you must build mitsuba3 in ./ext/mitsuba3/build
+# and then perform a 'source ./ext/mitsuba3/build/setpath.sh' in order to use the laser plugin
+
 import mitsuba as mi
+import drjit as dr
 import numpy as np
 import matplotlib.pyplot as plt
 import argparse
@@ -9,7 +13,7 @@ mi.set_variant('llvm_ad_rgb')
 
 # parsing prg args
 parser = argparse.ArgumentParser()
-parser.add_argument("-s", help="number of samples for the renders, default is 256", type=int)
+parser.add_argument("-s", help="number of samples for the renders, default is 8", type=int)
 parser.add_argument("-rs", help="coeff to resize ref images and renders, default is 0.5", type=float)
 args = parser.parse_args()
 
@@ -17,7 +21,7 @@ ref_sample, rs = None, None
 if args.s != None:
 	ref_sample = args.s
 else:
-	ref_sample = 128
+	ref_sample = 8
 if args.rs != None:
 	rs = args.rs
 else:
@@ -25,12 +29,22 @@ else:
 
 scene = mi.load_file("scenes/optimizationScene_measured.xml")
 
+def img_diff(img1, img2):
+    # TODO : check if same size
+    npimg1 = np.array(img1)
+    npimg2 = np.array(img2)
+    diff = np.empty((np.shape(npimg1)[0], np.shape(npimg1)[1]), dtype=float)
+    for i in range(np.shape(npimg1)[0]):
+        for j in range(np.shape(npimg1)[1]):
+            diff[i][j] = np.linalg.norm(npimg1[i][j] - npimg2[i][j])
+    return mi.Bitmap(diff)
+
 def load_sensors_lights_and_refs(sensors_dir):
     # ref picture loading (in folder ./ref/measured)
     dirs = sorted(os.listdir(sensors_dir))
     ref = {}
     for dir in dirs:
-        lambdas = os.listdir(sensors_dir + "/" + dir)
+        lambdas = sorted(os.listdir(sensors_dir + "/" + dir))
         # remove the [0:1] to use all the wave length
         for lam in lambdas[0:1]:
             if ref.__contains__(lam):
@@ -75,15 +89,55 @@ def load_sensors_lights_and_refs(sensors_dir):
 
     return sensors, laser_dir, ref
 
-sensors, laser_dir, ref = load_sensors_lights_and_refs("ref/measured")
+sensors, laser_dir, ref_images = load_sensors_lights_and_refs("ref/measured")
+
+# LOAD OPTIMIZER AND INIT AND LOAD OPTIMIZED PARAMETER
 
 params = mi.traverse(scene)
-print(params)
 
-for i in range(len(sensors)):
-    params['Laser.direction'] = laser_dir[i]
-    params.update()
-    image = mi.render(scene, spp=ref_sample, sensor=sensors[i])
-    # mi.util.write_bitmap('measured' + str(i) + '.png', image)
-    plt.imshow(mi.util.convert_to_bitmap(image))
-    plt.show()
+key = 'medium1.sigma_t.value.value'
+params[key] = 0.02
+params.update()
+
+opt = mi.ad.Adam(lr=0.25)
+opt[key] = params[key]
+params.update(opt)
+
+# OPTIMIZATION
+
+loss_evolution = []
+
+total_loss = 0.0
+for i in range(40):
+    total_loss = 0.0
+    for sensor in range(len(sensors)):
+        params['Laser.direction'] = laser_dir[sensor]
+        params.update()
+
+        img1 = mi.render(scene, spp=ref_sample, sensor=sensors[sensor], seed=i)
+        img2 = mi.render(scene, spp=ref_sample, sensor=sensors[sensor], seed=i+200)
+
+        # Xi Deng L2 loss function
+        loss = dr.abs(dr.mean((img1 - ref_images['465nm'][0])*(img2 - ref_images['465nm'][0])))
+
+        # Backpropagate gradients
+        dr.backward(loss)
+        
+        # Take a gradient step
+        opt.step()
+
+        # Propagate changes to the scene
+        params.update(opt)
+        
+        total_loss += loss[0]
+        print(f"Iteration {i:02d}: Total error={total_loss:6f}, Render {sensor+1:02d}/{len(sensors)}: error={loss[0]:6f}", end='\r')
+    loss_evolution.append(total_loss)
+        
+
+print(total_loss)
+plt.plot(range(40), loss_evolution, label='Loss evolution')
+plt.show()
+
+# mi.util.write_bitmap('measured' + str(i) + '.png', image)
+# plt.imshow(mi.util.convert_to_bitmap(image))
+# plt.show()

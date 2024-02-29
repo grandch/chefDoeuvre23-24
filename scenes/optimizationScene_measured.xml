@@ -3,8 +3,9 @@
     <default name="max_depth" value="-1" />
 
 <!-- integrator -->
-    <integrator type='volpath'>
+    <integrator type='prbvolpath'>
         <integer name="max_depth" value="$max_depth"/>
+        <integer name="rr_depth" value="50"/>
     	<boolean name="hide_emitters" value="True"/>
     </integrator>
 
