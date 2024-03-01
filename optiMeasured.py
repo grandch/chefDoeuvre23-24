@@ -1,56 +1,33 @@
+# before using this script you must build mitsuba3 in ./ext/mitsuba3/build
+# and then perform a 'source ./ext/mitsuba3/build/setpath.sh' in order to use the laser plugin
+
 import mitsuba as mi
 import drjit as dr
 import numpy as np
 import matplotlib.pyplot as plt
 import argparse
-import xml.etree.ElementTree as ET
+import os
+import rawpy
 
 mi.set_variant('llvm_ad_rgb')
 
-
 # parsing prg args
 parser = argparse.ArgumentParser()
-parser.add_argument("scene_path", help="path to the scene to render", type=str)
-parser.add_argument("ref_path", help="path to ref images", type=str)
-parser.add_argument("-x", help="x resolution, default is 720", type=int)
-parser.add_argument("-y", help="y_resolution, default is 480", type=int)
 parser.add_argument("-s", help="number of samples for the renders, default is 8", type=int)
-parser.add_argument("-fs", help="number of samples for the final renders, default is 4096", type=int)
-parser.add_argument("-lr", help="learning rate, default is 0.02", type=float)
-parser.add_argument("-it", help="iteration count, default is 40", type=int)
-parser.add_argument("-init_sigma_t", help="init value of sigma_t parameter, default is 0.002", type=float)
+parser.add_argument("-rs", help="coeff to resize ref images and renders, default is 0.5", type=float)
 args = parser.parse_args()
 
-spp, xRes, yRes, lr, iteration_count, fspp, init_sigma_t = None, None, None, None, None, None, None
+ref_sample, rs = None, None
 if args.s != None:
-	spp = args.s
+	ref_sample = args.s
 else:
-	spp = 8
-if args.x != None:
-	xRes = args.x
+	ref_sample = 8
+if args.rs != None:
+	rs = args.rs
 else:
-	xRes = 720
-if args.y != None:
-	yRes = args.y
-else:
-	yRes = 720
-if args.lr != None:
-    lr = args.lr
-else:
-    lr = 0.02
-if args.it != None:
-    iteration_count = args.it
-else:
-    iteration_count = 40
-if args.fs != None:
-    fspp = args.fs
-else:
-    fspp = 4096
-if args.init_sigma_t != None:
-    init_sigma_t = args.init_sigma_t
-else:
-    init_sigma_t = 0.002
+	rs = 0.5
 
+scene = mi.load_file("scenes/optimizationScene_measured.xml")
 
 def img_diff(img1, img2):
     # TODO : check if same size
@@ -62,152 +39,101 @@ def img_diff(img1, img2):
             diff[i][j] = np.linalg.norm(npimg1[i][j] - npimg2[i][j])
     return mi.Bitmap(diff)
 
-path_to_ref = args.ref_path
-path_to_sensor = args.sensor_path
+def load_sensors_lights_and_refs(sensors_dir):
+    # ref picture loading (in folder ./ref/measured)
+    dirs = sorted(os.listdir(sensors_dir))
+    ref = {}
+    for dir in dirs:
+        lambdas = sorted(os.listdir(sensors_dir + "/" + dir))
+        # remove the [0:1] to use all the wave length
+        for lam in lambdas[0:1]:
+            if ref.__contains__(lam):
+                # only the first picture (lower exposure time) is used here
+                rgb = rawpy.imread(sensors_dir + "/" + dir + "/" + lam + "/" + sorted(os.listdir(sensors_dir + "/" + dir + "/" + lam))[0]).postprocess()
+                bmp = mi.Bitmap(rgb).convert(component_format=mi.Struct.Type.Float32).resample([int(rs * 6744), int(rs * 4502)])
+                ref[lam].append(bmp)
+            else:
+                ref[lam] = []
+                # only the first picture (lower exposure time) is used here
+                rgb = rawpy.imread(sensors_dir + "/" + dir + "/" + lam + "/" + sorted(os.listdir(sensors_dir + "/" + dir + "/" + lam))[0]).postprocess()
+                bmp = mi.Bitmap(rgb).convert(component_format=mi.Struct.Type.Float32).resample([int(rs * 6744), int(rs * 4502)])
+                ref[lam].append(bmp)
 
-def load_ref_and_sensors(sensors_file):
-    origin, target, up = [], [], []
-    tree = ET.parse(sensors_file)
-    capteurs = tree.getroot()
-    for capteur in capteurs:
-        o, t, u = [], [], []
-        for v_o in capteur.iter('origin'):
-            o.append(np.float64(v_o.text))
-        for v_t in capteur.iter('target'):
-            t.append(np.float64(v_t.text))
-        for v_u in capteur.iter('up'):
-            u.append(np.float64(v_u.text))
-        origin.append(o)
-        target.append(t)
-        up.append(u)
+    # sensors and laser directions construction
+    origin, target, up, laser_dir = [], [], [], []
 
-    origin, target, up = np.array(origin), np.array(target), np.array(up)
-    return origin, target, up
+    origin.append([0.4124579436349758*0.839, 0.058085583954402234*0.839, -0.33230771606359427*0.839])
+    origin.append([-0.26187965706737165*1.2, 0.0639193905312978*1.2, -0.3371195109510675*1.2])
+    origin.append([0.07629510952287223*0.97, 0.06160241046937788*0.97, -0.4743865210065597*0.97])
+    origin.append([-0.04723309843906157, 0.06267489306727239, -0.45902214575013506])
+    origin.append([0.1995977351808692*0.92, 0.06094895876798736*0.92, -0.4572594416582021*0.92])
 
-origin, target, up = load_sensors(path_to_sensor)
-sensor_count = len(origin)
-sensors = []
+    for i in range(5):
+        target.append([0,0,0])
 
-for i in range(sensor_count):
+    up.append([0.04,-1,0])
+    up.append([0,-1,0])
+    up.append([0.01,-1,0])
+    up.append([-0.03,-1,0])
+    up.append([0,-1,0])
 
-	sensors.append(mi.load_dict({'type': 'perspective',
-				'fov_axis' : 'x',
-				'fov': 10,
-				'to_world': mi.ScalarTransform4f.look_at(
-		    		origin=origin[i],
-		    		target=target[i],
-		    		up=up[i]
-				),
-				'sampler': {
-		    			'type': 'independent',
-		    			'sample_count': spp
-					},
-				'film': {
-		    			'type': 'hdrfilm',
-		    			'width': xRes,
-		    			'height': yRes,
-		    			'rfilter': {
-		        			'type': 'gaussian',
-		        			'stddev' : 0.1,
-		    			},
-		    			'pixel_format': 'rgb',
-	       				},
-	    			}))
+    laser_dir.append([0, 0, -1])
+    laser_dir.append([0, 0, -1])
+    laser_dir.append([0.70710678, 0.0, -0.70710678])
+    laser_dir.append([0.5, 0.0, -0.866025])    
+    laser_dir.append([0.5, 0.0, -0.866025])
 
+    sensors = []
+    for i in range(len(origin)):
+        sensors.append(mi.load_dict({'type': 'perspective','focal_length' : '35mm','to_world': mi.ScalarTransform4f.look_at(origin=origin[i],target=target[i],up=up[i]),'sampler': {'type': 'independent','sample_count': ref_sample},'film': {'type': 'hdrfilm','width': int(rs * 6744),'height': int(rs * 4502),'rfilter': {'type': 'gaussian','stddev' : 0.1,},'pixel_format': 'rgb',},}))
 
-# LOAD INIT SCENE AND RESAMPLE REF IMAGES
+    return sensors, laser_dir, ref
 
-ref_images = [mi.Bitmap(path_to_ref+'synthetic_'+str(i)+'.exr').resample([xRes, yRes]) for i in range(sensor_count)]
-# ref_images = [mi.Bitmap(path_to_ref+'synthetic_'+str(i)+'.exr') for i in range(sensor_count)]
-
-scene = mi.load_file(args.scene_path)
-
+sensors, laser_dir, ref_images = load_sensors_lights_and_refs("ref/measured")
 
 # LOAD OPTIMIZER AND INIT AND LOAD OPTIMIZED PARAMETER
 
 params = mi.traverse(scene)
 
 key = 'medium1.sigma_t.value.value'
-params[key] = init_sigma_t
+params[key] = 0.02
 params.update()
 
-opt = mi.ad.Adam(lr=lr)
+opt = mi.ad.Adam(lr=0.25)
 opt[key] = params[key]
 params.update(opt)
 
-
-# OPTIMIZATION ---------------------------------------------
+# OPTIMIZATION
 
 loss_evolution = []
 
 total_loss = 0.0
-for it in range(iteration_count):
+for i in range(40):
     total_loss = 0.0
-    for sensor_idx in range(sensor_count):
-        # Perform the differentiable light transport simulation
-        img1 = mi.render(scene, params, sensor=sensors[sensor_idx], spp=spp, seed=it)
-        img2 = mi.render(scene, params, sensor=sensors[sensor_idx], spp=spp, seed=it+40)
-        
-        # Xi Deng L2 loss function
-        loss = dr.abs(dr.mean((img1 - ref_images[sensor_idx])*(img2 - ref_images[sensor_idx])))
-        
+    for sensor in range(len(sensors)):
+        params['Laser.direction'] = laser_dir[sensor]
+        params.update()
 
-        # classic L2 loss
-        # loss = dr.mean(dr.sqr(img1 - ref_images[sensor_idx]))
-        
+        img1 = mi.render(scene, params, spp=ref_sample, sensor=sensors[sensor], seed=i)
+        img2 = mi.render(scene, params, spp=ref_sample, sensor=sensors[sensor], seed=i+200)
+
+        # Xi Deng L2 loss function
+        loss = dr.abs(dr.mean((img1 - ref_images['465nm'][0])*(img2 - ref_images['465nm'][0])))
+
         # Backpropagate gradients
         dr.backward(loss)
         
         # Take a gradient step
         opt.step()
-        
-        # Clamp the optimized density values. Since we used the `scale` parameter
-        # when instantiating the volume, we are in fact optimizing extinction
-        # in a range from [1e-6 * scale, scale].
-        # opt[key] = dr.clamp(opt[key], 1e-6, 2.0)
-        
+
         # Propagate changes to the scene
         params.update(opt)
         
         total_loss += loss[0]
-        print(f"Iteration {it:02d}: Total error={total_loss:6f}, Render {sensor_idx+1:02d}/{sensor_count}: error={loss[0]:6f}", end='\r')
+        print(f"Iteration {i:02d}: Total error={total_loss:6f}, Render {sensor+1:02d}/{len(sensors)}: error={loss[0]:6f}", end='\r')
     loss_evolution.append(total_loss)
+        
 
-print("Final total loss="+str(total_loss))
-
-# FINAL RENDER
-
-final_images = []
-final_ref = []
-final_sub = []
-
-for i in [2,3,5,6,13,31,47]:
-    image = mi.render(scene, sensor=sensors[i], spp=fspp)
-    final_images.append(image)
-    final_ref.append(ref_images[i])
-
-    final_sub.append(img_diff(image, ref_images[i]))
-
-plt.title("Opti sp:"+str(spp)+" Final sp:"+str(fspp)+" Resolution:"+str(xRes)+"*"+str(yRes)+" Nb it:"+str(iteration_count)+" lr:"+str(lr))
-plt.subplot(4, 1, 1)
-plt.plot(range(iteration_count), loss_evolution, label='Loss evolution')
-plt.xlabel("Iteration count")
-plt.ylabel("Loss value")
-
-
-for i in range(len(final_images)):
-    plt.subplot(4, 7, 8+i)
-    plt.imshow(mi.util.convert_to_bitmap(final_ref[i]))
-    plt.xlabel("Sensor "+str(i)+" reference")
-
-    plt.subplot(4, 7, 15+i)
-    plt.imshow(mi.util.convert_to_bitmap(final_images[i]))
-    plt.xlabel("Sensor "+str(i)+" result")
-
-    plt.subplot(4, 7, 22+i)
-    plt.imshow(mi.util.convert_to_bitmap(final_sub[i]))
-    plt.xlabel("Sensor "+str(i)+" difference")
-
+print(total_loss)
+plt.plot(range(40), loss_evolution, label='Loss evolution')
 plt.show()
-
-print("sigma_t = "+str(params['medium1.sigma_t.value.value']))

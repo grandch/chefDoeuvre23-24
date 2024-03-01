@@ -1,3 +1,6 @@
+# before using this script you must build mitsuba3 in ../ext/mitsuba3/build
+# and then perform a 'source ../ext/mitsuba3/build/setpath.sh' in order to use the laser plugin
+
 import mitsuba as mi
 import matplotlib.pyplot as plt
 
