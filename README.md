@@ -51,11 +51,11 @@ Avant d'exécuter un script il faut lancer la commande suivante pour pouvoir uti
 source ext/mitsuba3/build/setpath.sh
 ```
 
-##### optiMitsubaExample
+##### optiMitsubaExample.py
 
 Ce script permet de se familiariser avec Mitsuba3 et le rendu différentiable. Il correspond à l'exemple donné dans la doc de Mitsuba3 accessible ici.
 
-##### renderRefImages
+##### renderRefImages.py
 
 Ce script sert à rendre des images synthétiques servant de références pour une optimisation. Un exemple d'utilisation serait
 
@@ -63,7 +63,7 @@ Ce script sert à rendre des images synthétiques servant de références pour u
 python3 renderRefImages.py scenes/refScene.xml ref/synt sensors/sensor.xml
 ```
 
-##### optiSoap
+##### optiSoap.py
 
 Ce script optimise le coefficient d'extinction sur un objet en prenant des références synthétiques. Un exemple d'utilisation serait
 
@@ -71,7 +71,7 @@ Ce script optimise le coefficient d'extinction sur un objet en prenant des réf�
 python3 optiSoap.py optimizationScene.xml ref/synt sensors/sensors.xml
 ```
 
-##### optiMeasured
+##### optiMeasured.py
 
 Ce script optimise le coefficient d'extinction sur un objet en prenant des références mesurées. Les références utilisées ont été mesurées par Morgane Gerardin et sont trop volumineuses pour figurer sur le git. Un exemple d'utilisation serait
 
