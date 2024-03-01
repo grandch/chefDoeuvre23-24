@@ -11,8 +11,11 @@ Dans ce contexte et encadrés par Morgane Gerardin (IRIT équipe STORM), nous av
 ### Contexte
 
 Les matériaux translucides (marbre, cire, savon...) se caractérisent par leur propriété de diffusion de la lumière : la lumière est non seulement diffusée à l’interface air/matériau par la rugosité de surface (diffusion surfacique), mais également dans le volume du matériau (diffusion sous-surfacique).
+
 En informatique graphique, il est commun de reproduire l’apparence de matériaux translucides par l’évaluation de la Bidirectionnal Subsurface Scattering Distribution Function (BSSRDF). Les modèles de BSSRDF, généralement analytiques, empiriques, ou issus d’approximation de la théorie du transfert radiatif, sont fonction de paramètres physiques intrinsèques aux matériaux étudiés (coefficient d’extinction, albédo, indice optique). Ces paramètres étant méconnus, il est difficile de reproduire l’apparence d’un matériau translucide donné de manière correcte et plausible visuellement. Il est donc nécessaire de déterminer les valeurs de ces paramètres en amont.
+
 Il est possible de faire cela par rendu différentiable: les paramètres intrinsèques sont déterminés à partir de photographies d’un matériau, par minimisation de l’écart entre ces photographies et des simulations utilisant un modèle de BSSRDF. Cette approche est mise en œuvre par [1], en utilisant un modèle de BSSRDF dit «modèle du dipôle». Il existe d’autre modèles, plus complexes et plus précis, pouvant être utilisés [4,5,6].
+
 L’objectif de ce projet est de déterminer les paramètres intrinsèques de matériaux translucides, par minimisation de l’écart entre données mesurées et simulation de l’apparence en utilisant divers modèles de BSSRDF. Plusieurs données de BSSRDF mesurées sont disponibles pour l’étude [3].
 
 ### Objectifs
